@@ -1,24 +1,21 @@
 import React from "react";
 import { render, waitFor, fireEvent, screen } from "@testing-library/react";
-import { loadScript } from "@paypal/paypal-js";
+import { loadScript, PayPalScriptOptions } from "@paypal/paypal-js";
+
 import { PayPalScriptProvider } from "./PayPalScriptProvider";
 import { usePayPalScriptReducer } from "../hooks/scriptProviderHooks";
-import {
-    SCRIPT_ID,
-    DATA_SDK_INTEGRATION_SOURCE,
-    DATA_SDK_INTEGRATION_SOURCE_VALUE,
-} from "../constants";
-import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
+import { SCRIPT_ID, SDK_SETTINGS } from "../constants";
+import { DISPATCH_ACTION } from "../types/enums";
 
 jest.mock("@paypal/paypal-js", () => ({
     loadScript: jest.fn(),
 }));
 
 function loadScriptMockImplementation({
-    "client-id": clientID,
+    clientId: clientID,
     [SCRIPT_ID]: reactPayPalScriptID,
 }: {
-    "client-id": string;
+    clientId: string;
     [SCRIPT_ID]: string;
 }) {
     const newScript = document.createElement("script");
@@ -44,14 +41,16 @@ describe("<PayPalScriptProvider />", () => {
     test('should set "isResolved" state to "true" after loading the script', async () => {
         const { state, TestComponent } = setupTestComponent();
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <TestComponent />
             </PayPalScriptProvider>
         );
         expect(loadScript).toHaveBeenCalledWith({
-            "client-id": "test",
+            clientId: "test",
             [SCRIPT_ID]: expect.stringContaining("react-paypal-js"),
-            [DATA_SDK_INTEGRATION_SOURCE]: DATA_SDK_INTEGRATION_SOURCE_VALUE,
+            [SDK_SETTINGS.DATA_SDK_INTEGRATION_SOURCE]:
+                SDK_SETTINGS.DATA_LIBRARY_VALUE,
+            [SDK_SETTINGS.DATA_JS_SDK_LIBRARY]: SDK_SETTINGS.DATA_LIBRARY_VALUE,
         });
 
         // verify initial loading state
@@ -59,34 +58,45 @@ describe("<PayPalScriptProvider />", () => {
         await waitFor(() => expect(state.isResolved).toBeTruthy());
         expect(state.isPending).toBeFalsy();
         expect(state.isRejected).toBeFalsy();
+        expect(state.loadingStatusErrorMessage).toBeFalsy();
     });
 
     test('should set "isRejected" state to "true" after failing to load the script', async () => {
-        (loadScript as jest.Mock).mockRejectedValue(new Error());
+        const spyConsoleError = jest
+            .spyOn(console, "error")
+            .mockImplementation();
+        (loadScript as jest.Mock).mockRejectedValue(new Error("test error"));
         const { state, TestComponent } = setupTestComponent();
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <TestComponent />
             </PayPalScriptProvider>
         );
         expect(loadScript).toHaveBeenCalledWith({
-            "client-id": "test",
+            clientId: "test",
             [SCRIPT_ID]: expect.stringContaining("react-paypal-js"),
-            [DATA_SDK_INTEGRATION_SOURCE]: DATA_SDK_INTEGRATION_SOURCE_VALUE,
+            [SDK_SETTINGS.DATA_SDK_INTEGRATION_SOURCE]:
+                SDK_SETTINGS.DATA_LIBRARY_VALUE,
+            [SDK_SETTINGS.DATA_JS_SDK_LIBRARY]: SDK_SETTINGS.DATA_LIBRARY_VALUE,
         });
 
         // verify initial loading state
         expect(state.isPending).toBeTruthy();
         await waitFor(() => expect(state.isRejected).toBeTruthy());
+        expect(state.loadingStatusErrorMessage).toBe("Error: test error");
         expect(state.isPending).toBeFalsy();
         expect(state.isResolved).toBeFalsy();
+        spyConsoleError.mockRestore();
     });
 
     test("shouldn't set isRejected state to true after failing to load the script, because the component was unmount", async () => {
+        const spyConsoleError = jest
+            .spyOn(console, "error")
+            .mockImplementation();
         (loadScript as jest.Mock).mockRejectedValue(new Error());
         const { state, TestComponent } = setupTestComponent();
         const { unmount } = render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <TestComponent />
             </PayPalScriptProvider>
         );
@@ -94,11 +104,13 @@ describe("<PayPalScriptProvider />", () => {
         unmount();
 
         await waitFor(() => expect(loadScript).toBeCalled());
+        expect(state.loadingStatusErrorMessage).toBeFalsy();
         // verify initial loading state
         expect(state.isInitial).toBeFalsy();
         expect(state.isPending).toBeTruthy();
         expect(state.isRejected).toBeFalsy();
         expect(state.isResolved).toBeFalsy();
+        spyConsoleError.mockRestore();
     });
 
     test("should control script loading with the deferLoading prop", async () => {
@@ -107,7 +119,7 @@ describe("<PayPalScriptProvider />", () => {
         const { rerender } = render(
             <PayPalScriptProvider
                 deferLoading={true}
-                options={{ "client-id": "test" }}
+                options={{ clientId: "test" }}
             >
                 <TestComponent />
             </PayPalScriptProvider>
@@ -121,20 +133,23 @@ describe("<PayPalScriptProvider />", () => {
         rerender(
             <PayPalScriptProvider
                 deferLoading={false}
-                options={{ "client-id": "test" }}
+                options={{ clientId: "test" }}
             >
                 <TestComponent />
             </PayPalScriptProvider>
         );
 
         expect(loadScript).toHaveBeenCalledWith({
-            "client-id": "test",
+            clientId: "test",
             [SCRIPT_ID]: expect.stringContaining("react-paypal-js"),
-            [DATA_SDK_INTEGRATION_SOURCE]: DATA_SDK_INTEGRATION_SOURCE_VALUE,
+            [SDK_SETTINGS.DATA_SDK_INTEGRATION_SOURCE]:
+                SDK_SETTINGS.DATA_LIBRARY_VALUE,
+            [SDK_SETTINGS.DATA_JS_SDK_LIBRARY]: SDK_SETTINGS.DATA_LIBRARY_VALUE,
         });
 
         expect(state.isPending).toBe(true);
         await waitFor(() => expect(state.isResolved).toBe(true));
+        expect(state.loadingStatusErrorMessage).toBeFalsy();
     });
 
     test("should remount without reloading the sdk script when the options have not changed", async () => {
@@ -142,7 +157,7 @@ describe("<PayPalScriptProvider />", () => {
 
         // the paypal-js loadScript() function avoids reloading the <script> when the options have not changed
         const options = {
-            "client-id": "test",
+            clientId: "test",
         };
 
         const { unmount } = render(
@@ -184,12 +199,12 @@ describe("usePayPalScriptReducer", () => {
     test("should manage state for loadScript()", async () => {
         const { state, TestComponent } = setupTestComponent();
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <TestComponent />
             </PayPalScriptProvider>
         );
 
-        expect(state.options).toHaveProperty("client-id", "test");
+        expect(state.options).toHaveProperty("clientId", "test");
         expect(state.isPending).toBeTruthy();
         await waitFor(() => expect(state.isResolved).toBeTruthy());
     });
@@ -209,16 +224,16 @@ describe("usePayPalScriptReducer", () => {
         const { state, TestComponent } = setupTestComponent();
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "abc" }}>
+            <PayPalScriptProvider options={{ clientId: "abc" }}>
                 <TestComponent>
                     <ResetParamsOnClick
-                        options={{ "client-id": "xyz", disableFunding: "card" }}
+                        options={{ clientId: "xyz", disableFunding: "card" }}
                     />
                 </TestComponent>
             </PayPalScriptProvider>
         );
 
-        expect(state.options).toMatchObject({ "client-id": "abc" });
+        expect(state.options).toMatchObject({ clientId: "abc" });
         expect(loadScript).toHaveBeenCalledWith(state.options);
 
         await waitFor(() => expect(state.isResolved).toBeTruthy());
@@ -235,7 +250,7 @@ describe("usePayPalScriptReducer", () => {
         expect(firstScriptID).not.toBe(secondScriptID);
 
         expect(state.options).toMatchObject({
-            "client-id": "xyz",
+            clientId: "xyz",
             disableFunding: "card",
         });
         expect(loadScript).toHaveBeenCalledWith(state.options);
@@ -244,6 +259,7 @@ describe("usePayPalScriptReducer", () => {
 
 function setupTestComponent() {
     const state = {
+        loadingStatusErrorMessage: "",
         options: { "data-react-paypal-script-id": "" },
         isInitial: true,
         isPending: false,
@@ -275,7 +291,7 @@ function ResetParamsOnClick({
 
     function onClick() {
         dispatch({
-            type: "resetOptions",
+            type: DISPATCH_ACTION.RESET_OPTIONS,
             value: options as PayPalScriptOptions,
         });
     }

@@ -1,16 +1,12 @@
-import React, { FC, useState, useEffect } from "react";
-import { loadCustomScript } from "@paypal/paypal-js";
+import React, { useState, useEffect } from "react";
 
-import {
-    DATA_CLIENT_TOKEN,
-    BRAINTREE_SOURCE,
-    BRAINTREE_PAYPAL_CHECKOUT_SOURCE,
-} from "../../constants";
+import { SDK_SETTINGS, LOAD_SCRIPT_ERROR } from "../../constants";
 import { PayPalButtons } from "../PayPalButtons";
 import { useScriptProviderContext } from "../../hooks/scriptProviderHooks";
-import { getBraintreeWindowNamespace } from "../../utils";
-import { decorateActions } from "./utils";
+import { decorateActions, getBraintreeNamespace } from "./utils";
 import { DISPATCH_ACTION } from "../../types";
+
+import type { FC } from "react";
 import type {
     BraintreePayPalButtonsComponentProps,
     PayPalButtonsComponentProps,
@@ -20,96 +16,77 @@ import type {
 This `<BraintreePayPalButtons />` component renders the [Braintree PayPal Buttons](https://developer.paypal.com/braintree/docs/guides/paypal/overview) for Braintree Merchants.
 It relies on the `<PayPalScriptProvider />` parent component for managing state related to loading the JS SDK script.
 
-Use props for customizing your buttons. For example, here's how you would use the `style`, `createOrder`, and `onApprove` options:
+Note: You are able to make your integration using the client token or using the tokenization key.
 
-```jsx
-    import { PayPalScriptProvider, BraintreePayPalButtons } from "@paypal/react-paypal-js";
-
-    <PayPalScriptProvider options={{ "client-id": "test" }}>
-        <BraintreePayPalButtons
-            style={{ layout: "horizontal" }}
-            createOrder={(data, actions) => {
-                // the paypalCheckoutInstance from the braintree sdk integration is added to `actions.braintree`
-                return actions.braintree.createPayment({
-                    flow: "checkout",
-                    amount: "10.0",
-                    currency: "USD",
-                    intent: "capture"
-                })
-            }}
-            onApprove={(data, actions) => {
-                return actions.braintree.tokenizePayment(data)
-                    .then((payload) => {
-                        // call server-side endpoint to finish the sale
-                    })
-            }
-        />
-    </PayPalScriptProvider>
-```
-
+- To use the client token integration set the key `dataClientToken` in the `PayPayScriptProvider` component's options.
+- To use the tokenization key integration set the key `dataUserIdToken` in the `PayPayScriptProvider` component's options.
 */
-export const BraintreePayPalButtons: FC<BraintreePayPalButtonsComponentProps> =
-    ({
-        className = "",
-        disabled = false,
-        children,
-        forceReRender = [],
-        ...buttonProps
-    }: BraintreePayPalButtonsComponentProps) => {
-        const [, setErrorState] = useState(null);
-        const [providerContext, dispatch] = useScriptProviderContext();
+export const BraintreePayPalButtons: FC<
+    BraintreePayPalButtonsComponentProps
+> = ({
+    className = "",
+    disabled = false,
+    children,
+    forceReRender = [],
+    braintreeNamespace,
+    merchantAccountId,
+    ...buttonProps
+}: BraintreePayPalButtonsComponentProps) => {
+    const [, setErrorState] = useState(null);
+    const [providerContext, dispatch] = useScriptProviderContext();
 
-        useEffect(() => {
-            Promise.all([
-                loadCustomScript({ url: BRAINTREE_SOURCE }),
-                loadCustomScript({ url: BRAINTREE_PAYPAL_CHECKOUT_SOURCE }),
-            ])
-                .then(() => {
-                    const clientToken = providerContext.options[
-                        DATA_CLIENT_TOKEN
-                    ] as string;
-                    const braintreeNamespace = getBraintreeWindowNamespace();
+    useEffect(() => {
+        getBraintreeNamespace(braintreeNamespace)
+            .then((braintree) => {
+                const clientTokenizationKey: string =
+                    providerContext.options[SDK_SETTINGS.DATA_USER_ID_TOKEN];
+                const clientToken: string =
+                    providerContext.options[SDK_SETTINGS.DATA_CLIENT_TOKEN];
 
-                    return braintreeNamespace.client
-                        .create({
-                            authorization: clientToken,
-                        })
-                        .then((clientInstance) => {
-                            return braintreeNamespace.paypalCheckout.create({
-                                client: clientInstance,
-                            });
-                        })
-                        .then((paypalCheckoutInstance) => {
-                            dispatch({
-                                type: DISPATCH_ACTION.SET_BRAINTREE_INSTANCE,
-                                value: paypalCheckoutInstance,
-                            });
+                return braintree.client
+                    .create({
+                        authorization: clientTokenizationKey || clientToken,
+                    })
+                    .then((clientInstance) => {
+                        const merchantProp = merchantAccountId
+                            ? { merchantAccountId }
+                            : {};
+
+                        return braintree.paypalCheckout.create({
+                            ...merchantProp,
+                            client: clientInstance,
                         });
-                })
-                .catch((err) => {
-                    setErrorState(() => {
-                        throw new Error(
-                            `An error occurred when loading the Braintree scripts: ${err}`
-                        );
+                    })
+                    .then((paypalCheckoutInstance) => {
+                        dispatch({
+                            type: DISPATCH_ACTION.SET_BRAINTREE_INSTANCE,
+                            value: paypalCheckoutInstance,
+                        });
                     });
+            })
+            .catch((err) => {
+                setErrorState(() => {
+                    throw new Error(`${LOAD_SCRIPT_ERROR} ${err}`);
                 });
-        }, [providerContext.options, dispatch]);
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [providerContext.options]);
 
-        return (
-            <>
-                {providerContext.braintreePayPalCheckoutInstance && (
-                    <PayPalButtons
-                        className={className}
-                        disabled={disabled}
-                        forceReRender={forceReRender}
-                        {...(decorateActions(
-                            buttonProps,
-                            providerContext.braintreePayPalCheckoutInstance
-                        ) as PayPalButtonsComponentProps)}
-                    >
-                        {children}
-                    </PayPalButtons>
-                )}
-            </>
-        );
-    };
+    return (
+        <>
+            {providerContext.braintreePayPalCheckoutInstance && (
+                <PayPalButtons
+                    className={className}
+                    disabled={disabled}
+                    forceReRender={forceReRender}
+                    {...(decorateActions(
+                        buttonProps,
+                        providerContext.braintreePayPalCheckoutInstance
+                    ) as PayPalButtonsComponentProps)}
+                >
+                    {children}
+                </PayPalButtons>
+            )}
+        </>
+    );
+};

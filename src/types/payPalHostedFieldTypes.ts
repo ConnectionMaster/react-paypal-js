@@ -1,9 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
-import { PAYPAL_HOSTED_FIELDS_TYPES } from "./enums";
+import type { HostedFieldsHandler, Installments } from "@paypal/paypal-js";
 
 export type PayPalHostedFieldsNamespace = {
-    components: string | undefined;
-    [DATA_NAMESPACE: string]: string | undefined;
+    components: string | string[] | undefined;
+} & { [DATA_NAMESPACE: string]: string | undefined };
+
+export type PayPalHostedFieldsRegistered = {
+    [key: string]: PayPalHostedFieldOptions;
 };
 
 export type PayPalHostedFieldOptions = {
@@ -33,21 +36,35 @@ export type PayPalHostedFieldOptions = {
 
 export interface PayPalHostedFieldProps {
     /**
-     * Represent the hosted field type: [NUMBER, CVV, EXPIRATION_DATE, EXPIRATION_MONTH, EXPIRATION_YEAR, POSTAL_CODE]
+     * Represent the hosted field type
      */
-    hostedFieldType: PAYPAL_HOSTED_FIELDS_TYPES;
+    hostedFieldType: string;
     /**
      * Options to modify the hosted field input. You can set a placeholder text,
      * a prefill value or set the maximum length of a field.
-     * Check available options in the this type:
      */
     options: PayPalHostedFieldOptions;
+    /**
+     * Defines a unique identifier (ID) which must be unique in the whole document
+     */
     id?: string;
+    /**
+     * A space-separated list of the classes of the element
+     */
     className?: string;
+    /**
+     * Helps define the language of an element: the language that non-editable elements are in,
+     * or the language that editable elements should be written in by the user
+     */
     lang?: string;
+    /**
+     * Contains a text representing advisory information related to the element it belongs to
+     */
     title?: string;
+    /**
+     * Contains CSS styling declarations to be applied to the element
+     */
     style?: CSSProperties;
-    align?: string;
 }
 export interface PayPalHostedFieldsBillingAddressProps {
     show: boolean;
@@ -89,9 +106,10 @@ export interface PayPalHostedFieldsComponentProps {
      * Function to manually create the transaction from your server
      */
     createOrder: () => Promise<string>;
+    installments?: Installments;
     children: ReactNode;
     /**
-     * Custom styles for hosted fields.
+     * [Styling options](https://developer.paypal.com/braintree/docs/guides/hosted-fields/styling/javascript/v3) for customizing the fields appearance
      *
      * ```
      *   {
@@ -110,3 +128,8 @@ export interface PayPalHostedFieldsComponentProps {
      */
     notEligibleError?: ReactNode;
 }
+
+export type PayPalHostedFieldContext = {
+    cardFields?: HostedFieldsHandler;
+    registerHostedField?: (component: PayPalHostedFieldsRegistered) => void;
+};

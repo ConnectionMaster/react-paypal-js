@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useState, FC, ReactNode } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
 import { usePayPalScriptReducer } from "../hooks/scriptProviderHooks";
 import { getPayPalWindowNamespace, generateErrorMessage } from "../utils";
-import { DATA_NAMESPACE } from "../constants";
+import { SDK_SETTINGS } from "../constants";
+
+import type { FC, ReactNode } from "react";
 import type {
     PayPalMarksComponentOptions,
     PayPalMarksComponent,
-} from "@paypal/paypal-js/types/components/marks";
+} from "@paypal/paypal-js";
 
 export interface PayPalMarksComponentProps extends PayPalMarksComponentOptions {
     /**
@@ -19,17 +22,9 @@ export interface PayPalMarksComponentProps extends PayPalMarksComponentOptions {
 The `<PayPalMarks />` component is used for conditionally rendering different payment options using radio buttons.
 The [Display PayPal Buttons with other Payment Methods guide](https://developer.paypal.com/docs/business/checkout/add-capabilities/buyer-experience/#display-paypal-buttons-with-other-payment-methods) describes this style of integration in detail.
 It relies on the `<PayPalScriptProvider />` parent component for managing state related to loading the JS SDK script.
-```jsx
-    <PayPalMarks />
-```
+
 This component can also be configured to use a single funding source similar to the [standalone buttons](https://developer.paypal.com/docs/business/checkout/configure-payments/standalone-buttons/) approach.
 A `FUNDING` object is exported by this library which has a key for every available funding source option.
-```jsx
-    import { PayPalScriptProvider, PayPalMarks, FUNDING } from "@paypal/react-paypal-js";
-    <PayPalScriptProvider options={{ "client-id": "test", components: "buttons,marks" }}>
-        <PayPalMarks fundingSource={FUNDING.PAYPAL}/>
-    </PayPalScriptProvider>
-```
 */
 export const PayPalMarks: FC<PayPalMarksComponentProps> = ({
     className = "",
@@ -73,10 +68,12 @@ export const PayPalMarks: FC<PayPalMarksComponentProps> = ({
 
     useEffect(() => {
         // verify the sdk script has successfully loaded
-        if (isResolved === false) return;
+        if (isResolved === false) {
+            return;
+        }
 
         const paypalWindowNamespace = getPayPalWindowNamespace(
-            options[DATA_NAMESPACE]
+            options[SDK_SETTINGS.DATA_NAMESPACE]
         );
 
         // verify dependency on window object
@@ -90,7 +87,7 @@ export const PayPalMarks: FC<PayPalMarksComponentProps> = ({
                         reactComponentName: PayPalMarks.displayName as string,
                         sdkComponentKey: "marks",
                         sdkRequestedComponents: options.components,
-                        sdkDataNamespace: options[DATA_NAMESPACE],
+                        sdkDataNamespace: options[SDK_SETTINGS.DATA_NAMESPACE],
                     })
                 );
             });

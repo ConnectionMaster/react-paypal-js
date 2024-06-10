@@ -1,8 +1,5 @@
 import type { PayPalButtonsComponentProps } from "./paypalButtonTypes";
-import type {
-    CreateOrderActions,
-    OnApproveActions,
-} from "@paypal/paypal-js/types/components/buttons";
+import type { CreateOrderActions, OnApproveActions } from "@paypal/paypal-js";
 import type { BraintreeClient } from "./braintree/clientTypes";
 import type {
     BraintreePayPalCheckout,
@@ -31,7 +28,8 @@ export interface BraintreePayPalButtonsComponentProps
         "createOrder" | "onApprove" | "createBillingAgreement"
     > {
     /**
-     * The createOrder actions include the Braintree SDK paypalCheckoutInstance as `actions.braintree`
+     * The createOrder actions include the Braintree SDK paypalCheckoutInstance as `actions.braintree`.
+     * [createOrder docs](https://developer.paypal.com/sdk/js-sdk/reference/#createorder).
      */
     createOrder?: (
         data: Record<string, unknown>,
@@ -51,6 +49,13 @@ export interface BraintreePayPalButtonsComponentProps
         data: OnApproveBraintreeData,
         actions: OnApproveBraintreeActions
     ) => Promise<void>;
+    /**
+     * An optional Braintree namespace.
+     * Useful to provide your own implementation of the Braintree namespace loader
+     * and avoid the default behavior of loading it from the official CDN.
+     */
+    braintreeNamespace?: BraintreeNamespace;
+    merchantAccountId?: string;
 }
 
 export type BraintreeNamespace = {

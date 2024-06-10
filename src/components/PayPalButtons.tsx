@@ -1,39 +1,16 @@
-import React, { useEffect, useRef, useState, FunctionComponent } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
 import { usePayPalScriptReducer } from "../hooks/scriptProviderHooks";
 import { getPayPalWindowNamespace, generateErrorMessage } from "../utils";
-import { DATA_NAMESPACE } from "../constants";
-import type {
-    PayPalButtonsComponent,
-    OnInitActions,
-} from "@paypal/paypal-js/types/components/buttons";
+import { SDK_SETTINGS } from "../constants";
+
+import type { FunctionComponent } from "react";
+import type { PayPalButtonsComponent, OnInitActions } from "@paypal/paypal-js";
 import type { PayPalButtonsComponentProps } from "../types";
 
 /**
-This `<PayPalButtons />` component renders the [Smart Payment Buttons](https://developer.paypal.com/docs/business/javascript-sdk/javascript-sdk-reference/#buttons).
+This `<PayPalButtons />` component supports rendering [buttons](https://developer.paypal.com/docs/business/javascript-sdk/javascript-sdk-reference/#buttons) for PayPal, Venmo, and alternative payment methods.
 It relies on the `<PayPalScriptProvider />` parent component for managing state related to loading the JS SDK script.
-
-Use props for customizing your buttons. For example, here's how you would use the `style`, `createOrder`, and `onApprove` options:
-
-```jsx
-    import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-
-    <PayPalScriptProvider options={{ "client-id": "test" }}>
-        <PayPalButtons
-            style={{ layout: "horizontal" }}
-            createOrder={(data, actions) => {
-                return actions.order.create({
-                    purchase_units: [
-                        {
-                            amount: {
-                                value: "2.00",
-                            },
-                        },
-                    ],
-                });
-            }}
-        />;
-    </PayPalScriptProvider>
-```
 */
 export const PayPalButtons: FunctionComponent<PayPalButtonsComponentProps> = ({
     className = "",
@@ -70,7 +47,7 @@ export const PayPalButtons: FunctionComponent<PayPalButtonsComponentProps> = ({
         }
 
         const paypalWindowNamespace = getPayPalWindowNamespace(
-            options[DATA_NAMESPACE]
+            options.dataNamespace
         );
 
         // verify dependency on window object
@@ -84,7 +61,7 @@ export const PayPalButtons: FunctionComponent<PayPalButtonsComponentProps> = ({
                         reactComponentName: PayPalButtons.displayName as string,
                         sdkComponentKey: "buttons",
                         sdkRequestedComponents: options.components,
-                        sdkDataNamespace: options[DATA_NAMESPACE],
+                        sdkDataNamespace: options[SDK_SETTINGS.DATA_NAMESPACE],
                     })
                 );
             });
@@ -143,7 +120,12 @@ export const PayPalButtons: FunctionComponent<PayPalButtonsComponentProps> = ({
 
         return closeButtonsComponent;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isResolved, ...forceReRender, buttonProps.fundingSource]);
+    }, [
+        isResolved,
+        ...forceReRender,
+        buttonProps.fundingSource,
+        buttonProps.message,
+    ]);
 
     // useEffect hook for managing disabled state
     useEffect(() => {

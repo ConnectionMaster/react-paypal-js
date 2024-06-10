@@ -1,12 +1,40 @@
 import { mock } from "jest-mock-extended";
+
+import { SDK_SETTINGS } from "./constants";
 import {
+    generateErrorMessage,
     getPayPalWindowNamespace,
     getBraintreeWindowNamespace,
     hashStr,
 } from "./utils";
+
 import type { PayPalNamespace } from "@paypal/paypal-js";
 import type { BraintreeNamespace } from "./types";
-import { DATA_NAMESPACE } from "./constants";
+
+describe("generateErrorMessage", () => {
+    const errorMessage =
+        "Unable to render <Example /> because window.customNamespace.Example is undefined.\nTo fix the issue, add 'example' to the list of components passed to the parent PayPalScriptProvider:\n`<PayPalScriptProvider options={{ components: 'hosted-fields,example'}}>`.";
+    test("sdkRequestedComponents as an array", () => {
+        expect(
+            generateErrorMessage({
+                reactComponentName: "Example",
+                sdkComponentKey: "example",
+                sdkRequestedComponents: ["hosted-fields"],
+                sdkDataNamespace: "customNamespace",
+            })
+        ).toBe(errorMessage);
+    });
+    test("sdkRequestedComponents as a string", () => {
+        expect(
+            generateErrorMessage({
+                reactComponentName: "Example",
+                sdkComponentKey: "example",
+                sdkRequestedComponents: "hosted-fields",
+                sdkDataNamespace: "customNamespace",
+            })
+        ).toBe(errorMessage);
+    });
+});
 
 describe("getPayPalWindowNamespace", () => {
     const mockPayPalNamespace = mock<PayPalNamespace>();
@@ -57,18 +85,18 @@ describe("hashStr", () => {
         expect(
             hashStr(
                 JSON.stringify({
-                    "client-id":
+                    clientId:
                         "AfmdXiQAZD1rldTeFe9RNvsz8eBBG-Mltqh6h-iocQ1GUNuXIDnCie9tHcueD_NrMWB9dTlWl34xEK7V",
                     currency: "USD",
                     intent: "authorize",
                     debug: false,
                     vault: false,
                     locale: "US",
-                    [DATA_NAMESPACE]: "braintree",
+                    [SDK_SETTINGS.DATA_NAMESPACE]: "braintree",
                 })
             )
         ).toMatchInlineSnapshot(
-            `"iiuovjsqddgseaaouopvvtcqciewjblfycugmepzoirvygvhquvfthtdttqasyqcdzbzaepjvxhbwsrjhhcurjzroipxqyishjiubldxsiumrlgiscmehhggkwzxusrrdpdxisuuektdeudjrtosskdpcksyhttbqsqsvdsoaugkffisgkusjvhthnqmlzgqccmutvqaztoqu"`
+            `"iiuovjsckceqfpltierfuadvueugmwdpyghjioombfdvqayoscllfvddtjnvtfgijdxjyablkakmjjmogakewwsybbxfiiseblauicltugxfqiistfmyeomwiyrvgkaswosisqbndhwqqmmclzswdxymqeuqwetbsehtpvnvgsvtsiscvpnvvxdxekjpwoayeofhgilfeke"`
         );
     });
 });

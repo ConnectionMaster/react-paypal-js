@@ -2,6 +2,130 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [8.4.0](https://github.com/paypal/react-paypal-js/compare/v8.3.0...v8.4.0) (2024-06-10)
+
+### Features
+
+-   updates PayPalButtons to add message option ([ee7cf02](https://github.com/paypal/react-paypal-js/commit/ee7cf029ad1d15d51aa38b2476f8c66bbcd511da))
+-   updates PayPalButtons to add message option ([8213385](https://github.com/paypal/react-paypal-js/commit/8213385f64d814cf50ed233a2f8201fc2238b84a))
+
+### Bug Fixes
+
+-   add individual story and cardfieldsprovider ([6c942c7](https://github.com/paypal/react-paypal-js/commit/6c942c75a58c8745236f261777c47ff1a1e97553))
+-   prettier ([8fa2294](https://github.com/paypal/react-paypal-js/commit/8fa2294eb27cf958da44507a7c6a9218f006fbe3))
+-   remove inputEvents and style for form component ([3306470](https://github.com/paypal/react-paypal-js/commit/3306470c3d1818a54bf74484bd58d883952636cb))
+-   remove options from form component ([ffb7af8](https://github.com/paypal/react-paypal-js/commit/ffb7af8639c1f9452261499f1d0af456a5ec9e40))
+-   skeleton for individual stories ([73676e6](https://github.com/paypal/react-paypal-js/commit/73676e6081d24e33485aad1268a7f6b45953bc4f))
+-   typo correction in readme ([557f591](https://github.com/paypal/react-paypal-js/commit/557f591c6980f7ddf5eba38fe46c6b7bb713391f))
+-   wip relative imports not working ([913dd15](https://github.com/paypal/react-paypal-js/commit/913dd153d73b6f17710cee20c9c17303cf4e5ebd))
+
+## [8.3.0](https://github.com/paypal/react-paypal-js/compare/v8.2.0...v8.3.0) (2024-04-29)
+
+### Features
+
+-   add cardfields form component ([634e6cd](https://github.com/paypal/react-paypal-js/commit/634e6cdfc4c3deb7d5b4cd903e196bf444bed9f4))
+
+### Bug Fixes
+
+-   prettier format ([3e03c3b](https://github.com/paypal/react-paypal-js/commit/3e03c3b7c34781ab98dbc624bac42f56c1b70cac))
+-   rerender error fixed ([161fea6](https://github.com/paypal/react-paypal-js/commit/161fea66574f351eeb1b34f5d96b5f7014e0c72d))
+
+## [8.2.0](https://github.com/paypal/react-paypal-js/compare/v8.1.4...v8.2.0) (2024-03-20)
+
+### Features
+
+-   add DATA_JS_SDK_LIBRARY to constants ([aa1b771](https://github.com/paypal/react-paypal-js/commit/aa1b771d85fa75083ad152f9d9b55d9c46ae051f))
+-   add js library to options ([acc5123](https://github.com/paypal/react-paypal-js/commit/acc512371460da4b7d2f59ba10c69034f7ecef45))
+-   hardcode js library ([95a29fa](https://github.com/paypal/react-paypal-js/commit/95a29fae3895042eca2b55f33a98a0d85ed97eae))
+-   rename constant ([1d027b6](https://github.com/paypal/react-paypal-js/commit/1d027b6b93d23309a4d6966f998e320fcf7c94e5))
+
+### Bug Fixes
+
+-   alphabetize constants ([0d9b495](https://github.com/paypal/react-paypal-js/commit/0d9b495a15e2fd8e923bc55237bb6ba0c69cd11e))
+-   enforce values ([faa6278](https://github.com/paypal/react-paypal-js/commit/faa6278d1ad530658999c21be36f24fa1322d8e6))
+
+### [8.1.4](https://github.com/paypal/react-paypal-js/compare/v8.1.3...v8.1.4) (2024-02-28)
+
+### Bug Fixes
+
+-   failing typecheck ([#408](https://github.com/paypal/react-paypal-js/issues/408)) ([df8f63b](https://github.com/paypal/react-paypal-js/commit/df8f63b05585c51a7eef9d9296bdcb76e13fa4a8))
+
+### [8.1.3](https://github.com/paypal/react-paypal-js/compare/v8.1.2...v8.1.3) (2023-08-16)
+
+### [8.1.2](https://github.com/paypal/react-paypal-js/compare/v8.1.1...v8.1.2) (2023-08-16)
+
+### Bug Fixes
+
+-   allow users to change data-sdk-integration-source ([#378](https://github.com/paypal/react-paypal-js/issues/378)) ([0feef3e](https://github.com/paypal/react-paypal-js/commit/0feef3e834fb2b9aaf23029855447715915bd1b2))
+
+### [8.1.1](https://github.com/paypal/react-paypal-js/compare/v8.1.0...v8.1.1) (2023-07-28)
+
+## [8.1.0](https://github.com/paypal/react-paypal-js/compare/v8.0.0...v8.1.0) (2023-07-03)
+
+### Features
+
+-   add loadingStatusErrorMessage to state ([#366](https://github.com/paypal/react-paypal-js/issues/366)) ([e1b9068](https://github.com/paypal/react-paypal-js/commit/e1b9068931c0fb832d884a0879d22deeca8304c2))
+
+## [8.0.0](https://github.com/paypal/react-paypal-js/compare/v7.8.3...v8.0.0) (2023-06-12)
+
+### ⚠ BREAKING CHANGES
+
+-   this is a breaking change for PayPalScriptProvider options.
+
+### Features
+
+-   use camelCase for PayPalScriptProvider options ([#360](https://github.com/paypal/react-paypal-js/issues/360)) ([168764e](https://github.com/paypal/react-paypal-js/commit/168764e4fb89be8717f256d4f9817bdf8e0a6eed))
+
+### [7.8.3](https://github.com/paypal/react-paypal-js/compare/v7.8.2...v7.8.3) (2023-03-27)
+
+### [7.8.2](https://github.com/paypal/react-paypal-js/compare/v7.8.1...v7.8.2) (2022-11-30)
+
+### [7.8.1](https://github.com/paypal/react-paypal-js/compare/v7.8.0...v7.8.1) (2022-05-27)
+
+## [7.8.0](https://github.com/paypal/react-paypal-js/compare/v7.7.0...v7.8.0) (2022-05-17)
+
+### Features
+
+-   **hostedFields:** add support for installments ([#271](https://github.com/paypal/react-paypal-js/issues/271)) ([c5e9670](https://github.com/paypal/react-paypal-js/commit/c5e967067517710765692c73c009d43ec60fb914))
+
+## [7.7.0](https://github.com/paypal/react-paypal-js/compare/v7.6.2...v7.7.0) (2022-05-10)
+
+### Features
+
+-   **braintree:** add merchantAccountId prop ([#269](https://github.com/paypal/react-paypal-js/issues/269)) ([9ee701c](https://github.com/paypal/react-paypal-js/commit/9ee701caf3b2926e126a28d7a6a00c28912e7cf3))
+
+### [7.6.2](https://github.com/paypal/react-paypal-js/compare/v7.6.1...v7.6.2) (2022-05-09)
+
+### Bug Fixes
+
+-   revert "fix(braintree): pass merchant-id through to session ([#265](https://github.com/paypal/react-paypal-js/issues/265))" ([#267](https://github.com/paypal/react-paypal-js/issues/267)) ([44b56b2](https://github.com/paypal/react-paypal-js/commit/44b56b2c9a799aad4108ba0fa0203bf86b359eb0))
+
+### [7.6.1](https://github.com/paypal/react-paypal-js/compare/v7.6.0...v7.6.1) (2022-05-09)
+
+### Bug Fixes
+
+-   **braintree:** pass merchant-id through to checkout session ([#265](https://github.com/paypal/react-paypal-js/issues/265)) ([1844fd5](https://github.com/paypal/react-paypal-js/commit/1844fd588c55de028656779e6ea3327f71b15d10))
+
+## [7.6.0](https://github.com/paypal/react-paypal-js/compare/v7.5.1...v7.6.0) (2022-02-01)
+
+### Features
+
+-   **braintree:** add optional prop for braintree namespace ([#238](https://github.com/paypal/react-paypal-js/issues/238)) ([8deab76](https://github.com/paypal/react-paypal-js/commit/8deab76564181c5f2b1a08babf9d4316cae5720d))
+-   **hostedFields:** support deeply nested children ([#240](https://github.com/paypal/react-paypal-js/issues/240)) ([f5fa95d](https://github.com/paypal/react-paypal-js/commit/f5fa95db3cfe1c8797e6f1eccb4c0abfb1355aaf))
+
+### [7.5.1](https://github.com/paypal/react-paypal-js/compare/v7.5.0...v7.5.1) (2022-01-14)
+
+### Bug Fixes
+
+-   add type for Braintree billing agreement option ([#234](https://github.com/paypal/react-paypal-js/issues/234)) ([ddaced2](https://github.com/paypal/react-paypal-js/commit/ddaced241a6a243cbb51689619918ab93710233e))
+-   **braintree:** support Braintree integrations using tokenization keys ([#216](https://github.com/paypal/react-paypal-js/issues/216)) ([3985a13](https://github.com/paypal/react-paypal-js/commit/3985a1309bb6c98f15584dc0ca33fe09c7207910))
+
+## [7.5.0](https://github.com/paypal/react-paypal-js/compare/v7.4.2...v7.5.0) (2021-11-29)
+
+### Features
+
+-   log loading errors for the JS SDK script ([#212](https://github.com/paypal/react-paypal-js/issues/212)) ([77973f0](https://github.com/paypal/react-paypal-js/commit/77973f0739e740ecbc4155cd79f733b9e2824484))
+
 ### [7.4.2](https://github.com/paypal/react-paypal-js/compare/v7.4.1...v7.4.2) (2021-10-15)
 
 ### Bug Fixes

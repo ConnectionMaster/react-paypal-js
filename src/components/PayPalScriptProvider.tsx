@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useReducer } from "react";
+import React, { useEffect, useReducer } from "react";
 import { loadScript } from "@paypal/paypal-js";
 
 import {
@@ -6,24 +6,30 @@ import {
     ScriptContext,
     scriptReducer,
 } from "../context/scriptProviderContext";
-import {
-    SCRIPT_ID,
-    DATA_SDK_INTEGRATION_SOURCE,
-    DATA_SDK_INTEGRATION_SOURCE_VALUE,
-} from "../constants";
-import type { ScriptProviderProps } from "../types";
+import { SCRIPT_ID, SDK_SETTINGS, LOAD_SCRIPT_ERROR } from "../constants";
 import { SCRIPT_LOADING_STATE, DISPATCH_ACTION } from "../types";
 
+import type { FC } from "react";
+import type { ScriptProviderProps } from "../types";
+
+/**
+This `<PayPalScriptProvider />` component takes care of loading the JS SDK `<script>`.
+It manages state for script loading so children components like `<PayPalButtons />` know when it's safe to use the `window.paypal` global namespace.
+
+Note: You always should use this component as a wrapper for  `PayPalButtons`, `PayPalMarks`, `PayPalMessages` and `BraintreePayPalButtons` components.
+ */
 export const PayPalScriptProvider: FC<ScriptProviderProps> = ({
-    options = { "client-id": "test" },
+    options = { clientId: "test" },
     children,
     deferLoading = false,
 }: ScriptProviderProps) => {
     const [state, dispatch] = useReducer(scriptReducer, {
         options: {
             ...options,
+            [SDK_SETTINGS.DATA_JS_SDK_LIBRARY]: SDK_SETTINGS.DATA_LIBRARY_VALUE,
+            [SDK_SETTINGS.DATA_SDK_INTEGRATION_SOURCE]:
+                SDK_SETTINGS.DATA_LIBRARY_VALUE,
             [SCRIPT_ID]: `${getScriptID(options)}`,
-            [DATA_SDK_INTEGRATION_SOURCE]: DATA_SDK_INTEGRATION_SOURCE_VALUE,
         },
         loadingStatus: deferLoading
             ? SCRIPT_LOADING_STATE.INITIAL
@@ -41,7 +47,9 @@ export const PayPalScriptProvider: FC<ScriptProviderProps> = ({
             });
         }
 
-        if (state.loadingStatus !== SCRIPT_LOADING_STATE.PENDING) return;
+        if (state.loadingStatus !== SCRIPT_LOADING_STATE.PENDING) {
+            return;
+        }
 
         let isSubscribed = true;
 
@@ -54,11 +62,15 @@ export const PayPalScriptProvider: FC<ScriptProviderProps> = ({
                     });
                 }
             })
-            .catch(() => {
+            .catch((err) => {
+                console.error(`${LOAD_SCRIPT_ERROR} ${err}`);
                 if (isSubscribed) {
                     dispatch({
                         type: DISPATCH_ACTION.LOADING_STATUS,
-                        value: SCRIPT_LOADING_STATE.REJECTED,
+                        value: {
+                            state: SCRIPT_LOADING_STATE.REJECTED,
+                            message: String(err),
+                        },
                     });
                 }
             });

@@ -1,11 +1,15 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import { mock } from "jest-mock-extended";
-import { PayPalScriptProvider } from '../components/PayPalScriptProvider';
+import { loadScript } from "@paypal/paypal-js";
+import { ErrorBoundary } from "react-error-boundary";
+
+import { PayPalScriptProvider } from "../components/PayPalScriptProvider";
 import { PayPalMarks } from "./PayPalMarks";
 import { FUNDING } from "../index";
-import { loadScript, PayPalNamespace } from "@paypal/paypal-js";
-import { ErrorBoundary } from "react-error-boundary";
+
+import type { ReactNode } from "react";
+import type { PayPalNamespace } from "@paypal/paypal-js";
 
 jest.mock("@paypal/paypal-js", () => ({
     loadScript: jest.fn(),
@@ -35,11 +39,12 @@ describe("<PayPalMarks />", () => {
                 isEligible: jest.fn().mockReturnValue(true),
                 render: jest.fn().mockResolvedValue({}),
             })),
-        } as any;
+            version: "",
+        };
 
         render(
             <PayPalScriptProvider
-                options={{ "client-id": "test", components: "marks" }}
+                options={{ clientId: "test", components: "marks" }}
             >
                 <PayPalMarks fundingSource={FUNDING.CREDIT} />
             </PayPalScriptProvider>
@@ -58,11 +63,12 @@ describe("<PayPalMarks />", () => {
                 isEligible: jest.fn().mockReturnValue(true),
                 render: jest.fn().mockResolvedValue({}),
             })),
-        } as any;
+            version: "",
+        };
 
         render(
             <PayPalScriptProvider
-                options={{ "client-id": "test", components: "marks" }}
+                options={{ clientId: "test", components: "marks" }}
             >
                 <PayPalMarks className="custom-class-name" />
             </PayPalScriptProvider>
@@ -78,7 +84,7 @@ describe("<PayPalMarks />", () => {
             .spyOn(console, "error")
             .mockImplementation();
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks />
             </PayPalScriptProvider>,
             { wrapper }
@@ -93,10 +99,12 @@ describe("<PayPalMarks />", () => {
         const spyConsoleError = jest
             .spyOn(console, "error")
             .mockImplementation();
+        (window.paypal as PayPalNamespace).Marks = undefined;
+
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
+                    clientId: "test",
                     components: "buttons,messages",
                 }}
             >
@@ -117,7 +125,7 @@ describe("<PayPalMarks />", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
+                    clientId: "test",
                     components: "buttons,messages,marks",
                 }}
             >
@@ -135,20 +143,24 @@ describe("<PayPalMarks />", () => {
         const spyConsoleError = jest
             .spyOn(console, "error")
             .mockImplementation();
-        window.paypal!.Marks = () => {
-            return {
-                isEligible: jest.fn().mockReturnValue(true),
-                render: jest.fn((element) => {
-                    // simulate adding markup for paypal mark
-                    if (typeof element != "string")
-                        element.append(document.createElement("div"));
-                    return Promise.reject("Unknown error");
-                }),
-            };
+        window.paypal = {
+            Marks() {
+                return {
+                    isEligible: jest.fn().mockReturnValue(true),
+                    render: jest.fn((element) => {
+                        // simulate adding markup for paypal mark
+                        if (typeof element !== "string") {
+                            element.append(document.createElement("div"));
+                        }
+                        return Promise.reject("Unknown error");
+                    }),
+                };
+            },
+            version: "",
         };
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks />
             </PayPalScriptProvider>,
             { wrapper }
@@ -166,13 +178,18 @@ describe("<PayPalMarks />", () => {
         const mockRender = jest
             .fn()
             .mockRejectedValue(new Error("Unknown error"));
-        window.paypal!.Marks = () => ({
-            isEligible: jest.fn().mockReturnValue(true),
-            render: mockRender,
-        });
+        window.paypal = {
+            Marks() {
+                return {
+                    isEligible: jest.fn().mockReturnValue(true),
+                    render: mockRender,
+                };
+            },
+            version: "",
+        };
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks className="test-class" />
             </PayPalScriptProvider>
         );
@@ -184,13 +201,18 @@ describe("<PayPalMarks />", () => {
     test("should not render component when ineligible", async () => {
         const mockIsEligible = jest.fn().mockReturnValue(false);
         const mockRender = jest.fn().mockResolvedValue(true);
-        window.paypal!.Marks = () => ({
-            isEligible: mockIsEligible,
-            render: mockRender,
-        });
+        window.paypal = {
+            Marks() {
+                return {
+                    isEligible: mockIsEligible,
+                    render: mockRender,
+                };
+            },
+            version: "",
+        };
 
         const { container } = render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks className="mark-container">
                     <div className="ineligible"></div>
                 </PayPalMarks>
@@ -215,13 +237,18 @@ describe("<PayPalMarks />", () => {
             element.append(markElement);
             return Promise.resolve();
         });
-        window.paypal!.Marks = () => ({
-            isEligible: jest.fn().mockReturnValue(true),
-            render: mockRender,
-        });
+        window.paypal = {
+            Marks() {
+                return {
+                    isEligible: jest.fn().mockReturnValue(true),
+                    render: mockRender,
+                };
+            },
+            version: "",
+        };
 
         const { rerender } = render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks fundingSource="paypal" />
             </PayPalScriptProvider>
         );
@@ -229,7 +256,7 @@ describe("<PayPalMarks />", () => {
         await waitFor(() => expect(mockRender).toBeCalledTimes(1));
 
         rerender(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalMarks fundingSource="card" />
             </PayPalScriptProvider>
         );

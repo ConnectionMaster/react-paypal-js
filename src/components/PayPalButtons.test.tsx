@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { useState } from "react";
 import {
     render,
     waitFor,
@@ -8,15 +8,18 @@ import {
 } from "@testing-library/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { mock } from "jest-mock-extended";
+import { loadScript } from "@paypal/paypal-js";
 
 import { PayPalButtons } from "./PayPalButtons";
-import { FUNDING } from "../index";
-import { loadScript, PayPalNamespace } from "@paypal/paypal-js";
 import { PayPalScriptProvider } from "./PayPalScriptProvider";
-import {
+import { FUNDING } from "../index";
+
+import type { ReactNode } from "react";
+import type {
     PayPalButtonsComponent,
     PayPalButtonsComponentOptions,
-} from "@paypal/paypal-js/types/components/buttons";
+    PayPalNamespace,
+} from "@paypal/paypal-js";
 
 jest.mock("@paypal/paypal-js", () => ({
     loadScript: jest.fn(),
@@ -55,10 +58,11 @@ describe("<PayPalButtons />", () => {
 
     test("should pass props to window.paypal.Buttons()", async () => {
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons
                     fundingSource={FUNDING.CREDIT}
                     style={{ layout: "horizontal" }}
+                    message={{ amount: 100 }}
                 />
             </PayPalScriptProvider>
         );
@@ -66,6 +70,7 @@ describe("<PayPalButtons />", () => {
         await waitFor(() =>
             expect(window.paypal?.Buttons).toHaveBeenCalledWith({
                 style: { layout: "horizontal" },
+                message: { amount: 100 },
                 fundingSource: FUNDING.CREDIT,
                 onInit: expect.any(Function),
             })
@@ -74,7 +79,7 @@ describe("<PayPalButtons />", () => {
 
     test("should use className prop and add to div container", async () => {
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons className="custom-class-name" />
             </PayPalScriptProvider>
         );
@@ -88,7 +93,7 @@ describe("<PayPalButtons />", () => {
         const onInitCallbackMock = jest.fn();
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons
                     className="custom-class-name"
                     disabled={true}
@@ -124,7 +129,7 @@ describe("<PayPalButtons />", () => {
 
     test("should enable the Buttons when disabled=true", async () => {
         const { container, rerender } = render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons
                     className="custom-class-name"
                     disabled={true}
@@ -153,11 +158,11 @@ describe("<PayPalButtons />", () => {
             )
         );
         rerender(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons
                     className="custom-class-name"
                     disabled={false}
-                    onInit={onInitActions as any}
+                    onInit={onInitActions.enable}
                 />
             </PayPalScriptProvider>
         );
@@ -189,7 +194,7 @@ describe("<PayPalButtons />", () => {
         }
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <ButtonWrapper initialAmount="1" />
             </PayPalScriptProvider>
         );
@@ -219,13 +224,18 @@ describe("<PayPalButtons />", () => {
             return (
                 <>
                     <div data-testid="orderID">{orderID}</div>
-                    <PayPalButtons createOrder={() => setOrderID("2") as any} />
+                    <PayPalButtons
+                        createOrder={() => {
+                            setOrderID("2");
+                            return Promise.resolve("2");
+                        }}
+                    />
                 </>
             );
         }
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <ButtonWrapper initialOrderID="1" />
             </PayPalScriptProvider>
         );
@@ -236,7 +246,7 @@ describe("<PayPalButtons />", () => {
 
         expect(screen.getByTestId("orderID").innerHTML).toBe("1");
 
-        act(() =>
+        await act(() =>
             // call createOrder() to trigger a state change
             (window.paypal?.Buttons as jest.Mock).mock.calls[0][0].createOrder()
         );
@@ -259,7 +269,7 @@ describe("<PayPalButtons />", () => {
         } as any;
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons className="test-button" />
             </PayPalScriptProvider>
         );
@@ -287,7 +297,7 @@ describe("<PayPalButtons />", () => {
         window.paypal = {} as any;
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons />
             </PayPalScriptProvider>,
             { wrapper }
@@ -309,7 +319,7 @@ describe("<PayPalButtons />", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
+                    clientId: "test",
                     components: "marks,messages",
                 }}
             >
@@ -327,21 +337,25 @@ describe("<PayPalButtons />", () => {
         const spyConsoleError = jest
             .spyOn(console, "error")
             .mockImplementation();
-        window.paypal!.Buttons = () => {
-            return {
-                close: jest.fn().mockResolvedValue({}),
-                isEligible: jest.fn().mockReturnValue(true),
-                render: jest.fn((element: string | HTMLElement) => {
-                    // simulate adding markup for paypal button
-                    if (typeof element != "string")
-                        element.append(document.createElement("div"));
-                    return Promise.reject("Unknown error");
-                }),
-            };
+        window.paypal = {
+            Buttons() {
+                return {
+                    close: jest.fn().mockResolvedValue({}),
+                    isEligible: jest.fn().mockReturnValue(true),
+                    render: jest.fn((element: string | HTMLElement) => {
+                        // simulate adding markup for paypal button
+                        if (typeof element !== "string") {
+                            element.append(document.createElement("div"));
+                        }
+                        return Promise.reject("Unknown error");
+                    }),
+                };
+            },
+            version: "",
         };
 
         render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons />
             </PayPalScriptProvider>,
             { wrapper }
@@ -356,23 +370,25 @@ describe("<PayPalButtons />", () => {
         const spyConsoleError = jest
             .spyOn(console, "error")
             .mockImplementation();
-        window.paypal!.Buttons = (
-            options?: PayPalButtonsComponentOptions | undefined
-        ) => {
-            if (
-                options?.style?.color === "gold" &&
-                options?.fundingSource == "venmo"
-            )
-                throw new Error(
-                    "Unexpected style.color for venmo button: gold, expected blue, silver, black, white"
-                );
-            return mockPaypalButtonsComponent;
+        window.paypal = {
+            Buttons(options?: PayPalButtonsComponentOptions | undefined) {
+                if (
+                    options?.style?.color === "gold" &&
+                    options?.fundingSource === "venmo"
+                ) {
+                    throw new Error(
+                        "Unexpected style.color for venmo button: gold, expected blue, silver, black, white"
+                    );
+                }
+                return mockPaypalButtonsComponent;
+            },
+            version: "",
         };
 
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
+                    clientId: "test",
                     components: "marks,messages",
                 }}
             >
@@ -401,16 +417,19 @@ describe("<PayPalButtons />", () => {
         const mockRender = jest
             .fn()
             .mockRejectedValue(new Error("Unknown error"));
-        window.paypal!.Buttons = () => {
-            return {
-                close: jest.fn().mockResolvedValue({}),
-                isEligible: jest.fn().mockReturnValue(true),
-                render: mockRender,
-            };
+        window.paypal = {
+            Buttons() {
+                return {
+                    close: jest.fn().mockResolvedValue({}),
+                    isEligible: jest.fn().mockReturnValue(true),
+                    render: mockRender,
+                };
+            },
+            version: "",
         };
 
         const { container } = render(
-            <PayPalScriptProvider options={{ "client-id": "test" }}>
+            <PayPalScriptProvider options={{ clientId: "test" }}>
                 <PayPalButtons className="test-children" />
             </PayPalScriptProvider>
         );

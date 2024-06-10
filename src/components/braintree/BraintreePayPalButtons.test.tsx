@@ -1,24 +1,23 @@
 import React from "react";
 import { mock } from "jest-mock-extended";
 import { render, waitFor } from "@testing-library/react";
-import {
-    loadScript,
-    loadCustomScript,
-    PayPalNamespace,
-} from "@paypal/paypal-js";
+import { loadScript, loadCustomScript } from "@paypal/paypal-js";
 import { ErrorBoundary } from "react-error-boundary";
-
-import { PayPalButtonsComponent } from "@paypal/paypal-js/types/components/buttons";
 
 import { BraintreePayPalButtons } from "./BraintreePayPalButtons";
 import { PayPalScriptProvider } from "../PayPalScriptProvider";
 import {
-    EMPTY_PROVIDER_CONTEXT_CLIENT_TOKEN_ERROR_MESSAGE,
+    EMPTY_BRAINTREE_AUTHORIZATION_ERROR_MESSAGE,
     BRAINTREE_SOURCE,
     BRAINTREE_PAYPAL_CHECKOUT_SOURCE,
+    LOAD_SCRIPT_ERROR,
 } from "../../constants";
-
 import { FUNDING } from "../../index";
+
+import type {
+    PayPalNamespace,
+    PayPalButtonsComponent,
+} from "@paypal/paypal-js";
 
 jest.mock("@paypal/paypal-js", () => ({
     loadScript: jest.fn(),
@@ -107,18 +106,18 @@ describe("Braintree PayPal button fail in mount process", () => {
             errorMessage = (ex as Error).message;
         }
         expect(errorMessage).toEqual(
-            "A client token wasn't found in the provider parent component"
+            EMPTY_BRAINTREE_AUTHORIZATION_ERROR_MESSAGE
         );
         expect(console.error).toHaveBeenCalled();
     });
 
-    test("should fail rendering the BraintreePayPalButton component if the data-client-token is not set in the options", () => {
+    test("should fail rendering the BraintreePayPalButton component if the dataClientToken is not set in the options", () => {
         console.error = jest.fn();
         let errorMessage = null;
 
         try {
             render(
-                <PayPalScriptProvider options={{ "client-id": "test" }}>
+                <PayPalScriptProvider options={{ clientId: "test" }}>
                     <BraintreePayPalButtons />
                 </PayPalScriptProvider>
             );
@@ -126,12 +125,12 @@ describe("Braintree PayPal button fail in mount process", () => {
             errorMessage = (ex as Error).message;
         }
         expect(errorMessage).toEqual(
-            EMPTY_PROVIDER_CONTEXT_CLIENT_TOKEN_ERROR_MESSAGE
+            EMPTY_BRAINTREE_AUTHORIZATION_ERROR_MESSAGE
         );
         expect(console.error).toHaveBeenCalled();
     });
 
-    test("should fail rendering the BraintreePayPalButton component if the data-client-token is empty string", () => {
+    test("should fail rendering the BraintreePayPalButton component if the dataClientToken is empty string", () => {
         let errorMessage = null;
         console.error = jest.fn();
 
@@ -139,8 +138,8 @@ describe("Braintree PayPal button fail in mount process", () => {
             render(
                 <PayPalScriptProvider
                     options={{
-                        "client-id": "test",
-                        "data-client-token": "",
+                        clientId: "test",
+                        dataClientToken: "",
                     }}
                 >
                     <BraintreePayPalButtons />
@@ -151,7 +150,7 @@ describe("Braintree PayPal button fail in mount process", () => {
         }
 
         expect(errorMessage).toEqual(
-            EMPTY_PROVIDER_CONTEXT_CLIENT_TOKEN_ERROR_MESSAGE
+            EMPTY_BRAINTREE_AUTHORIZATION_ERROR_MESSAGE
         );
         expect(console.error).toHaveBeenCalled();
     });
@@ -168,8 +167,8 @@ describe("Braintree PayPal button fail in mount process", () => {
             render(
                 <PayPalScriptProvider
                     options={{
-                        "client-id": "test",
-                        "data-client-token": CLIENT_TOKEN,
+                        clientId: "test",
+                        dataClientToken: CLIENT_TOKEN,
                     }}
                 >
                     <BraintreePayPalButtons />
@@ -196,8 +195,8 @@ describe("Braintree PayPal button fail in mount process", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                 }}
             >
                 <BraintreePayPalButtons />
@@ -208,8 +207,7 @@ describe("Braintree PayPal button fail in mount process", () => {
         await waitFor(() => expect(onError).toBeCalled());
         expect(onError.mock.calls[0][0]).toEqual(
             expect.objectContaining({
-                message:
-                    "An error occurred when loading the Braintree scripts: Error: Server Error",
+                message: `${LOAD_SCRIPT_ERROR} Error: Server Error`,
             })
         );
         spyConsoleError.mockRestore();
@@ -227,8 +225,8 @@ describe("Braintree PayPal button fail in mount process", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                 }}
             >
                 <BraintreePayPalButtons />
@@ -239,8 +237,7 @@ describe("Braintree PayPal button fail in mount process", () => {
         await waitFor(() => expect(onError).toBeCalled());
         expect(onError.mock.calls[0][0]).toEqual(
             expect.objectContaining({
-                message:
-                    "An error occurred when loading the Braintree scripts: Error: Cannot create the Braintree client",
+                message: `${LOAD_SCRIPT_ERROR} Error: Cannot create the Braintree client`,
             })
         );
         spyConsoleError.mockRestore();
@@ -256,8 +253,8 @@ describe("Braintree PayPal button fail in mount process", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                 }}
             >
                 <BraintreePayPalButtons />
@@ -268,8 +265,7 @@ describe("Braintree PayPal button fail in mount process", () => {
         await waitFor(() => expect(onError).toBeCalled());
         expect(onError.mock.calls[0][0]).toEqual(
             expect.objectContaining({
-                message:
-                    "An error occurred when loading the Braintree scripts: TypeError: Cannot read property 'client' of null",
+                message: `${LOAD_SCRIPT_ERROR} TypeError: Cannot read properties of null (reading 'client')`,
             })
         );
         spyConsoleError.mockRestore();
@@ -283,8 +279,8 @@ describe("render Braintree PayPal button component", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                 }}
             >
                 <BraintreePayPalButtons />
@@ -294,8 +290,8 @@ describe("render Braintree PayPal button component", () => {
         await waitFor(() => {
             expect(loadScript).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                     "data-react-paypal-script-id": expect.any(String),
                 })
             );
@@ -314,12 +310,13 @@ describe("render Braintree PayPal button component", () => {
         render(
             <PayPalScriptProvider
                 options={{
-                    "client-id": "test",
-                    "data-client-token": CLIENT_TOKEN,
+                    clientId: "test",
+                    dataClientToken: CLIENT_TOKEN,
                 }}
             >
                 <BraintreePayPalButtons
                     style={{ layout: "horizontal" }}
+                    message={{ amount: 100 }}
                     fundingSource={FUNDING.CREDIT}
                     createOrder={jest.fn()}
                     onApprove={jest.fn()}
@@ -332,10 +329,39 @@ describe("render Braintree PayPal button component", () => {
                 window.paypal.Buttons) as jest.Mock;
             expect(mockButtons).toBeCalledWith({
                 style: { layout: "horizontal" },
+                message: { amount: 100 },
                 fundingSource: FUNDING.CREDIT,
                 createOrder: expect.any(Function),
                 onApprove: expect.any(Function),
                 onInit: expect.any(Function),
+            });
+        });
+    });
+
+    test("should call paypalCheckout.create with merchantAccountId value", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mockFuntion = (window as any).braintree.paypalCheckout.create;
+        const options = {
+            clientId: "test",
+            dataClientToken: CLIENT_TOKEN,
+        };
+
+        render(
+            <PayPalScriptProvider options={options}>
+                <BraintreePayPalButtons
+                    style={{ layout: "horizontal" }}
+                    merchantAccountId="merchantId"
+                    fundingSource={FUNDING.CREDIT}
+                    createOrder={jest.fn()}
+                    onApprove={jest.fn()}
+                />
+            </PayPalScriptProvider>
+        );
+
+        await waitFor(() => {
+            expect(mockFuntion).toBeCalledWith({
+                client: expect.any(Object),
+                merchantAccountId: "merchantId",
             });
         });
     });
